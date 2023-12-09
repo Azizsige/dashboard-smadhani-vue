@@ -46,12 +46,13 @@ const addSlider = async (name) => {
     loading.value = await true;
     console.log(name);
     try {
-        await store.addSlider(imageSlider.value);
+        for (const file of store.imageSet) {
+            await store.addSlider(file);
+        }
         await toast.add({ severity: 'success', summary: 'Congratulations!', detail: `Slider Image has been added!`, life: 3000 });
         await getSlider();
         productDialog.value = await false;
-        imageBase.value = await '';
-        imageSlider.value = await '';
+        store.imageSet = []
     } catch (error) {
         await toast.add({ severity: 'error', summary: 'Error Message', detail: error.response.data.message || `Image has been exist`, life: 3000 });
     }
@@ -74,20 +75,19 @@ const deleteSlider = async (Id, name) => {
     loading.value = await false;
 };
 
-// Delete Many Tag
 const deleteSliderMany = async () => {
     loading.value = await true;
     loadingData.value = await true;
     try {
         const selectedTag = selectedProducts.value;
         console.log(selectedTag.value);
-        selectedTag.forEach(async (Slider) => {
-            await store.deleteSlider(Slider._id);
+        selectedTag.forEach(async (slider) => {
+            await store.deleteSlider(slider._id);
         });
         await getSlider();
         deleteProductsDialog.value = await false;
-        imageBase.value = '';
-        await toast.add({ severity: 'success', summary: 'Congratulations!', detail: `Selected Slider has been deleted!`, life: 3000 });
+        selectedProducts.value = await null;
+        await toast.add({ severity: 'success', summary: 'Congratulations!', detail: `Selected Image Slider has been deleted!`, life: 3000 });
     } catch (error) {
         await toast.add({ severity: 'error', summary: 'Error Message', detail: error.response.message, life: 3000 });
     }
@@ -102,18 +102,16 @@ const updateSlider = async (id, name) => {
 
     try {
         loadingData.value = await true;
-        await store.updateSlider(id, imageSlider.value);
-        await toast.add({ severity: 'success', summary: 'Congratulations!', detail: `${name} has been updated!`, life: 3000 });
+        await store.updateSlider(id, store.imageSetUpdate[0]);
+        await toast.add({ severity: 'success', summary: 'Congratulations!', detail: `Image Slider has been updated!`, life: 3000 });
         await getSlider();
         updateProductDialog.value = await false;
-        imageBase.value = await '';
-        imageSlider.value = await '';
+        store.imageSetUpdate = []
     } catch (error) {
         await toast.add({ severity: 'error', summary: 'Error Message', detail: error.response.data.message || `${name} has been exist`, life: 3000 });
     }
     loading.value = await false;
     loadingData.value = await false;
-    imageBase.value = '';
 };
 
 // noColumn
@@ -257,37 +255,30 @@ const initFilters = () => {
                 <Toolbar class="mb-4">
                     <template v-slot:start>
                         <div class="my-2">
-                            <h1>MANAGE Slider</h1>
+                            <span class="block p-1 text-black-alpha-90 text-5xl">Slider</span>
+                            <span class="block lb-desc p-1">View all image slider</span>
                         </div>
                     </template>
                     <template v-slot:end>
                         <div class="my-2">
-                            <Button label="New" icon="pi pi-plus" class="p-button-success mr-2" @click="openNew" />
-                            <Button label="Delete" icon="pi pi-trash" class="p-button-danger" @click="confirmDeleteSelected" :disabled="!selectedProducts || !selectedProducts.length" />
+                            <Button label="Add New Image Slider" icon="pi pi-plus" class="p-button-success mr-2"
+                                @click="openNew" />
+                            <Button label="Delete" icon="pi pi-trash" class="p-button-danger" @click="confirmDeleteSelected"
+                                :disabled="!selectedProducts || !selectedProducts.length" />
                         </div>
                     </template>
                 </Toolbar>
 
                 <Skeleton width="100%" height="150px" v-if="loadingData"></Skeleton>
 
-                <DataTable
-                    v-else-if="store.slider && store.slider.length > 0 && !loadingData"
-                    class="p-datatable-gridlines p-datatable-lg"
-                    ref="dt"
-                    :value="store.slider"
-                    :paginator="true"
-                    :rows="10"
-                    :rowsPerPageOptions="[5, 10, 25, 50]"
-                    :globalFilterFields="['name', 'description', 'category']"
-                    :filters="filters"
-                    :selection="selectedProducts"
-                    @selectionChange="selectedProducts = $event.value"
-                    :rowHover="true"
-                    v-model:selection="selectedProducts"
+                <DataTable v-else-if="store.slider && store.slider.length > 0 && !loadingData"
+                    class="p-datatable-gridlines p-datatable-lg" ref="dt" :value="store.slider" :paginator="true" :rows="10"
+                    :rowsPerPageOptions="[5, 10, 25, 50]" :globalFilterFields="['name', 'description', 'category']"
+                    :filters="filters" :selection="selectedProducts" @selectionChange="selectedProducts = $event.value"
+                    :rowHover="true" v-model:selection="selectedProducts"
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
-                    responsiveLayout="scroll"
-                >
+                    responsiveLayout="scroll">
                     <Column selectionMode="multiple" style="width: 3rem" />
                     <Column :field="noColumn" header="No" sortable />
                     <Column header="Image" headerStyle="width:14%; min-width:10rem;">
@@ -298,8 +289,10 @@ const initFilters = () => {
                     </Column>
                     <Column header="Action" headerStyle="min-width:1rem;">
                         <template #body="slotProps">
-                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editProduct(slotProps.data)" />
-                            <Button icon="pi pi-trash" class="p-button-rounded p-button-warning mt-2" @click="confirmDeleteProduct(slotProps.data)" />
+                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2"
+                                @click="editProduct(slotProps.data)" />
+                            <Button icon="pi pi-trash" class="p-button-rounded p-button-warning mt-2"
+                                @click="confirmDeleteProduct(slotProps.data)" />
                         </template>
                     </Column>
                 </DataTable>
@@ -307,69 +300,107 @@ const initFilters = () => {
                     <h1>{{ store.message }}</h1>
                 </div>
 
-                <Dialog :closable="false" v-model:visible="productDialog" :style="{ width: '450px' }" header="Image Details" :modal="true" class="p-fluid">
-                    <img :src="product.url" :alt="product.image" v-if="product.image" width="150" class="mt-0 mx-auto mb-5 block shadow-2" />
-                    <div class="field mx-auto w-full flex flex-column align-items-center justify-content-center">
-                        <!-- image dinamis src -->
-                        <div class="wrapp">
-                            <img :src="imageBase" v-if="imageBase" width="250" class="mt-0 mx-auto mb-5 block shadow-2" />
-                        </div>
-                        <input id="file-input" class="hide-file-input" type="file" accept="image/*" @change="onFileChange($event)" />
-                        <label class="file-label" for="file-input"> Upload a file </label>
-                    </div>
+                <Dialog :closable="false" v-model:visible="productDialog" :style="{ width: '450px' }" header="Add New Image"
+                    :modal="true" class="p-fluid">
+                    <Toast />
+                    <FileUpload name="demo[]" url="#" :showCancelButton="false" :auto="true" :multiple="true"
+                        :maxFileSize="1000000" ref="fileUpload" @progress="($event) => {
+                            console.log('On progress : ', $event);
+
+                            progress = $event.progress;
+                        }
+                            " @before-send="($event) => {
+        console.log('Before send : ', $event);
+    }" @select="($event) => {
+    console.log('On select : ', $event.files);
+    store.imageSet = $event.files
+}" @removeUploadedFile="($event) => {
+    console.log('On remove : ', $event);
+    store.imageSet = $event.files;
+}">
+                        <template #header="">
+                            <div class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2">
+                            </div>
+                        </template>
+                        <template #empty>
+                            <div class="flex flex-row flex-wrap align-items-center justify-content-center ">
+                                <i class="pi pi-cloud-upload text-4xl text-400 border-400 flex " />
+                                <p class="flex mx-2 m-0">Drag and drop files to here to upload or </p>
+                                <Button @click="$refs.fileUpload.choose()" label="browse" class="underline p-1"
+                                    link></Button>
+                            </div>
+                        </template>
+                    </FileUpload>
                     <template #footer>
-                        <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text" @click="hideDialog" />
+                        <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text"
+                            @click="hideDialog" />
                         <Button label="Cancel" v-else icon="pi pi-times" class="p-button-text" @click="hideDialog" />
-                        <Button label="Save" v-if="imageBase" :loading="loading" icon="pi pi-check" class="p-button-text" @click="addSlider" />
-                        <Button label="Save" v-else disabled :loading="loading" icon="pi pi-check" class="p-button-text" @click="addSlider(product.image)" />
+                        <Button label="Save" v-if="store.imageSet.length == 0" disabled :loading="loading"
+                            icon="pi pi-check" class="p-button-text" @click="addSlider" />
+                        <Button label="Save" v-else :loading="loading" icon="pi pi-check" class="p-button-text"
+                            @click="addSlider" />
                     </template>
                 </Dialog>
 
-                <Dialog :closable="false" v-model:visible="updateProductDialog" :style="{ width: '450px' }" header="Image Details" modal class="p-fluid">
-                    <img :src="product.url" :alt="product.image" v-if="product.image" width="250" class="mt-0 mx-auto mb-5 block shadow-2" />
-                    <div v-if="imageBase" class="showImageUpdate">
-                        <p>Update to this :</p>
-                        <img :src="imageBase" :alt="imageContentType" width="250" class="mt-0 mx-auto mb-5 block shadow-2" />
-                    </div>
-
-                    <div class="field w-full flex justify-content-center align-items-center">
-                        <!-- image dinamis src -->
-
-                        <input id="file-input" class="hide-file-input" type="file" accept="image/*" @change="onFileChange($event)" />
-                        <label class="file-label" for="file-input"> Upload a file </label>
-                    </div>
+                <Dialog :closable="false" v-model:visible="updateProductDialog" :style="{ width: '450px' }"
+                    header="Update Image Slider" modal class="p-fluid">
+                    <Toast />
+                    <FileUpload name="demo[]" url="#" :auto="true" :multiple="false" :maxFileSize="1000000" ref="fileUpload"
+                        @select="($event) => {
+                            console.log('On select : ', $event.files);
+                            store.imageSetUpdate = $event.files
+                        }">
+                        <template #header="">
+                            <div class="flex flex-wrap justify-content-between align-items-center flex-1 gap-2">
+                            </div>
+                        </template>
+                        <template #empty>
+                            <div class="flex flex-row flex-wrap align-items-center justify-content-center ">
+                                <i class="pi pi-cloud-upload text-4xl text-400 border-400 flex " />
+                                <p class="flex mx-2 m-0">Drag and drop files to here to upload or </p>
+                                <Button @click="$refs.fileUpload.choose()" label="browse" class="underline p-1"
+                                    link></Button>
+                            </div>
+                        </template>
+                    </FileUpload>
                     <template #footer>
-                        <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text" @click="hideDialog" />
+                        <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text"
+                            @click="hideDialog" />
                         <Button label="Cancel" v-else icon="pi pi-times" class="p-button-text" @click="hideDialog" />
-                        <Button v-if="imageBase" label="Update" :loading="loading" icon="pi pi-check" class="p-button-text" @click="updateSlider(product._id, product.image)" />
-                        <Button v-else disabled label="Update" :loading="loading" icon="pi pi-check" class="p-button-text" @click="updateSlider(product._id, product.image)" />
+                        <Button v-if="store.imageSetUpdate.length == 0" disabled label="Update" :loading="loading"
+                            icon="pi pi-check" class="p-button-text" @click="updateSlider(product._id)" />
+                        <Button label="Update" v-else :loading="loading" icon="pi pi-check" class="p-button-text"
+                            @click="updateSlider(product._id)" />
                     </template>
                 </Dialog>
 
-                <Dialog :closable="false" v-model:visible="deleteProductDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+                <Dialog :closable="false" v-model:visible="deleteProductDialog" :style="{ width: '450px' }" header="Confirm"
+                    :modal="true">
                     <div class="flex align-items-center justify-content-center">
                         <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
-                        <span v-if="product"
-                            >Are you sure you want to delete <b>{{ product.image }}</b
-                            >?</span
-                        >
+                        <span v-if="product">Are you sure you want to delete <b>{{ product.image }}</b>?</span>
                     </div>
                     <template #footer>
-                        <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text" @click="hideDialog" />
+                        <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text"
+                            @click="hideDialog" />
                         <Button label="Cancel" v-else icon="pi pi-times" class="p-button-text" @click="hideDialog" />
-                        <Button :loading="loading" label="Yes" icon="pi pi-check" class="p-button-text" @click="deleteSlider(product._id, product.image)" />
+                        <Button :loading="loading" label="Yes" icon="pi pi-check" class="p-button-text"
+                            @click="deleteSlider(product._id, product.image)" />
                     </template>
                 </Dialog>
 
-                <Dialog :closable="false" v-model:visible="deleteProductsDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
+                <Dialog :closable="false" v-model:visible="deleteProductsDialog" :style="{ width: '450px' }"
+                    header="Confirm" :modal="true">
                     <div class="flex align-items-center justify-content-center">
                         <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
                         <span v-if="product">Are you sure you want to delete the selected images?</span>
                     </div>
                     <template #footer>
-                        <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text" @click="hideDialog" />
+                        <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text"
+                            @click="hideDialog" />
                         <Button label="Cancel" v-else icon="pi pi-times" class="p-button-text" @click="hideDialog" />
-                        <Button label="Yes" :loading="loading" icon="pi pi-check" class="p-button-text" @click="deleteSliderMany" />
+                        <Button label="Yes" :loading="loading" icon="pi pi-check" class="p-button-text"
+                            @click="deleteSliderMany" />
                     </template>
                 </Dialog>
             </div>
@@ -389,6 +420,7 @@ const initFilters = () => {
     white-space: nowrap;
     border-width: 0;
 }
+
 .file-label {
     color: #fff;
     background-color: #3730a3;
@@ -396,7 +428,8 @@ const initFilters = () => {
     border-radius: 0.25rem;
     cursor: pointer;
 }
-input[type='file']:focus + .file-label {
+
+input[type='file']:focus+.file-label {
     box-shadow: 0 0 0 4px #bae6fd;
 }
 </style>

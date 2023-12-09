@@ -6,7 +6,9 @@ export const sliderStore = defineStore('sliderStore', {
     state: () => ({
         slider: null,
         message: null,
-        imageGetter: null
+        imageGetter: null,
+        imageSet: [],
+        imageSetUpdate: []
     }),
     actions: {
         async getSlider() {
@@ -41,7 +43,7 @@ export const sliderStore = defineStore('sliderStore', {
             const store = authStore();
 
             const params = new FormData();
-            params.append('image', image);
+            params.append('images', image);
 
             try {
                 await axios
@@ -64,12 +66,16 @@ export const sliderStore = defineStore('sliderStore', {
                 throw error;
             }
         },
-        async deleteSlider(idTag) {
+        async deleteSlider(ids) {
             const store = authStore();
+
+            const params = new URLSearchParams();
+            params.append('ids', ids);
 
             try {
                 await axios
-                    .delete(`http://localhost:5000/api/slider/${idTag}`, {
+                    .delete(`http://localhost:5000/api/slider/`, {
+                        data: params,
                         headers: {
                             Authorization: `Bearer ${store.accessToken}`
                         }
@@ -86,11 +92,11 @@ export const sliderStore = defineStore('sliderStore', {
                 console.log(error);
             }
         },
-        async updateSlider(idImage, image) {
+        async updateSlider(idImage, images) {
             const store = authStore();
 
             const params = new FormData();
-            params.append('image', image);
+            params.append('images', images);
 
             try {
                 await axios

@@ -10,6 +10,7 @@ import { galleryStore } from './../../stores/galleryStore';
 const store = galleryStore();
 
 const products = ref(null);
+const propsShowCancel = false;
 const imageBase = ref('');
 const imageGallery = ref(null);
 const imageContentType = ref(null);
@@ -342,13 +343,14 @@ const initFilters = () => {
                 <Toolbar class="mb-4">
                     <template v-slot:start>
                         <div class="my-2">
-                            <span class="block p-1">Gallery</span>
+                            <span class="block p-1 text-black-alpha-90 text-5xl">Gallery</span>
                             <span class="block lb-desc p-1">View all image gallery</span>
                         </div>
                     </template>
                     <template v-slot:end>
                         <div class="my-2">
-                            <Button label="New" icon="pi pi-plus" class="p-button-success mr-2" @click="openNew" />
+                            <Button label="Add New Image" icon="pi pi-plus" class="p-button-success mr-2"
+                                @click="openNew" />
                             <Button label="Delete" icon="pi pi-trash" class="p-button-danger" @click="confirmDeleteSelected"
                                 :disabled="!selectedProducts || !selectedProducts.length" />
                         </div>
@@ -369,7 +371,6 @@ const initFilters = () => {
                         <p class="text-center w-full">Data is not available</p>
                     </template>
                     <Column selectionMode="multiple" style="width: 3rem" />
-                    <Column :field="noColumn" header="No" sortable />
                     <Column header="Image" headerStyle="width:14%; min-width:10rem;">
                         <template #body="slotProps">
                             <Skeleton width="100%" v-if="loadingData"></Skeleton>
@@ -382,9 +383,9 @@ const initFilters = () => {
                         <template #body="slotProps">
                             <Skeleton width="100%" v-if="loadingData"></Skeleton>
                             <div v-else-if="!loadingData">
-                                <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2"
+                                <Button label="Edit" icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2"
                                     @click="editProduct(slotProps.data)" />
-                                <Button icon="pi pi-trash" class="p-button-rounded p-button-warning mt-2"
+                                <Button icon="pi pi-trash" class="p-button-rounded p-button-danger mt-2" label="Delete"
                                     @click="confirmDeleteProduct(slotProps.data)" />
                             </div>
 
@@ -398,8 +399,8 @@ const initFilters = () => {
                 <Dialog :closable="false" v-model:visible="productDialog" :style="{ width: '450px' }" header="Add New Image"
                     :modal="true" class="p-fluid">
                     <Toast />
-                    <FileUpload name="demo[]" url="#" :auto="true" :multiple="true" :maxFileSize="1000000" ref="fileUpload"
-                        @progress="($event) => {
+                    <FileUpload name="demo[]" url="#" :showCancelButton="false" :auto="true" :multiple="true"
+                        :maxFileSize="1000000" ref="fileUpload" @progress="($event) => {
                             console.log('On progress : ', $event);
 
                             progress = $event.progress;
@@ -431,12 +432,9 @@ const initFilters = () => {
                         <Button label="Cancel" v-if="loading" disabled icon="pi pi-times" class="p-button-text"
                             @click="hideDialog" />
                         <Button label="Cancel" v-else icon="pi pi-times" class="p-button-text" @click="hideDialog" />
-                        <!-- <Button label="Save" v-if="store.imageSet.length > 0" :loading="loading" icon="pi pi-check"
-                            class="p-button-text" @click="addGallery" />
-                        <Button label="Save" v-else disabled :loading="loading" icon="pi pi-check" class="p-button-text"
-                            @click="addGallery(product.image)" /> -->
-
-                        <Button label="Save" :loading="loading" icon="pi pi-check" class="p-button-text"
+                        <Button label="Save" v-if="store.imageSet.length == 0" disabled :loading="loading"
+                            icon="pi pi-check" class="p-button-text" @click="addGallery" />
+                        <Button label="Save" v-else :loading="loading" icon="pi pi-check" class="p-button-text"
                             @click="addGallery" />
                     </template>
                 </Dialog>
