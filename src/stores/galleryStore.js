@@ -10,7 +10,8 @@ export const galleryStore = defineStore('galleryStore', {
         imageSet: [],
         imageSetUpdate: [],
         fileName: '',
-        fileUrl: null
+        fileUrl: null,
+        loadingData: false
     }),
     actions: {
         async getGallery() {
@@ -44,6 +45,7 @@ export const galleryStore = defineStore('galleryStore', {
         async getGalleryById(id) {
             const store = authStore();
             console.log(id);
+            this.loadingData = true;
             try {
                 await axios
                     .get(`http://localhost:5000/api/galeri/${id}`, {
@@ -55,9 +57,11 @@ export const galleryStore = defineStore('galleryStore', {
                         console.log(res);
                         this.fileName = res.data.galeri.images;
                         this.fileUrl = res.data.galeri.url;
+                        this.loadingData = false;
                     })
                     .catch((err) => {
                         console.log(err);
+                        this.loadingData = false;
                     });
             } catch (error) {
                 console.log(error);
