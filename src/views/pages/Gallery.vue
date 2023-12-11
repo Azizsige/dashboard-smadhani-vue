@@ -4,6 +4,7 @@ import { ref, onMounted, onBeforeMount, nextTick } from 'vue';
 import ProductService from '@/service/ProductService';
 import { useToast } from 'primevue/usetoast';
 import FileUpload from 'primevue/fileupload';
+import Message from 'primevue/message';
 const toast = useToast();
 
 import { galleryStore } from './../../stores/galleryStore';
@@ -278,6 +279,7 @@ const saveProduct = () => {
 const editProduct = async (editProduct) => {
     product.value = { ...editProduct };
     console.log(product);
+    await store.getGalleryById(product.value._id)
     updateProductDialog.value = true;
     console.log(product.value.url);
 };
@@ -443,6 +445,13 @@ const initFilters = () => {
                 <Dialog :closable="false" v-model:visible="updateProductDialog" :style="{ width: '450px' }"
                     header="Update New Image" modal class="p-fluid">
                     <Toast />
+                    <Message :closable="false">
+                        <template #messageicon>
+                            <Avatar :image="store.fileUrl" size="xlarge" />
+
+                        </template>
+                        <span class="ml-2">{{ store.fileName }}</span>
+                    </Message>
                     <FileUpload name="demo[]" url="#" :auto="true" :multiple="false" :maxFileSize="1000000" ref="fileUpload"
                         @select="($event) => {
                             console.log('On select : ', $event.files);
@@ -455,7 +464,7 @@ const initFilters = () => {
                         <template #empty>
                             <div class="flex flex-row flex-wrap align-items-center justify-content-center ">
                                 <i class="pi pi-cloud-upload text-4xl text-400 border-400 flex " />
-                                <p class="flex mx-2 m-0">Drag and drop files to here to upload or </p>
+                                <p class="flex mx-2 m-0">Drag and drop files to here to update or </p>
                                 <Button @click="$refs.fileUpload.choose()" label="browse" class="underline p-1"
                                     link></Button>
                             </div>
@@ -469,7 +478,9 @@ const initFilters = () => {
                             @click="updateGallery(product._id)" />
                         <Button v-else disabled label="Update" :loading="loading" icon="pi pi-check" class="p-button-text"
                             @click="updateGallery(product._id)" /> -->
-                        <Button label="Update" :loading="loading" icon="pi pi-check" class="p-button-text"
+                        <Button v-if="store.imageSetUpdate.length == 0" disabled label="Update" :loading="loading"
+                            icon="pi pi-check" class="p-button-text" @click="updateGallery(product._id)" />
+                        <Button v-else label="Update" :loading="loading" icon="pi pi-check" class="p-button-text"
                             @click="updateGallery(product._id)" />
                     </template>
                 </Dialog>

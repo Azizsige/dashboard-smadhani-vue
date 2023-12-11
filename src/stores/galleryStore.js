@@ -8,7 +8,9 @@ export const galleryStore = defineStore('galleryStore', {
         message: null,
         imageGetter: null,
         imageSet: [],
-        imageSetUpdate: []
+        imageSetUpdate: [],
+        fileName: '',
+        fileUrl: null
     }),
     actions: {
         async getGallery() {
@@ -51,6 +53,8 @@ export const galleryStore = defineStore('galleryStore', {
                     })
                     .then((res) => {
                         console.log(res);
+                        this.fileName = res.data.galeri.images;
+                        this.fileUrl = res.data.galeri.url;
                     })
                     .catch((err) => {
                         console.log(err);
