@@ -6,7 +6,12 @@ export const facilityStore = defineStore('facilityStore', {
     state: () => ({
         fasilitas: null,
         message: null,
-        imageGetter: null
+        imageGetter: null,
+        imageSet: null,
+        imageSetUpdate: null,
+        fileName: '',
+        fileUrl: null,
+        loadingData: false
     }),
     actions: {
         async getFacility() {
@@ -32,6 +37,31 @@ export const facilityStore = defineStore('facilityStore', {
                     })
                     .catch((err) => {
                         console.log(err);
+                    });
+            } catch (error) {
+                console.log(error);
+            }
+        },
+        async getFacilityById(id) {
+            const store = authStore();
+            console.log(id);
+            this.loadingData = true;
+            try {
+                await axios
+                    .get(`http://localhost:5000/api/fasilitas/${id}`, {
+                        headers: {
+                            Authorization: `Bearer ${store.accessToken}`
+                        }
+                    })
+                    .then((res) => {
+                        console.log(res);
+                        this.fileName = res.data.fasilitas.image;
+                        this.fileUrl = res.data.fasilitas.url;
+                        this.loadingData = false;
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        this.loadingData = false;
                     });
             } catch (error) {
                 console.log(error);
@@ -65,12 +95,16 @@ export const facilityStore = defineStore('facilityStore', {
                 throw error;
             }
         },
-        async deleteFacility(idTag) {
+        async deleteFacility(ids) {
             const store = authStore();
+
+            const params = new URLSearchParams();
+            params.append('ids', ids);
 
             try {
                 await axios
-                    .delete(`http://localhost:5000/api/fasilitas/${idTag}`, {
+                    .delete(`http://localhost:5000/api/fasilitas`, {
+                        data: params,
                         headers: {
                             Authorization: `Bearer ${store.accessToken}`
                         }

@@ -278,10 +278,8 @@ const saveProduct = () => {
 
 const editProduct = async (editProduct) => {
     product.value = { ...editProduct };
-    console.log(product);
-    await store.getGalleryById(product.value._id)
     updateProductDialog.value = true;
-    console.log(product.value.url);
+    await store.getGalleryById(product.value._id)
 };
 
 const confirmDeleteProduct = (editProduct) => {
@@ -442,7 +440,11 @@ const initFilters = () => {
                 </Dialog>
 
                 <!-- Update Image -->
-                <Dialog :closable="false" v-model:visible="updateProductDialog" :style="{ width: '450px' }"
+                <Dialog v-if="store.loadingData" :closable="false" v-model:visible="updateProductDialog"
+                    :style="{ width: '450px' }" header="Update New Image" modal class="p-fluid">
+                    <Skeleton width="100%" height="150px"></Skeleton>
+                </Dialog>
+                <Dialog v-else :closable="false" v-model:visible="updateProductDialog" :style="{ width: '450px' }"
                     header="Update New Image" modal class="p-fluid">
                     <Toast />
                     <Message :closable="false">

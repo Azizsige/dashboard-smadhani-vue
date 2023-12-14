@@ -8,7 +8,10 @@ export const sliderStore = defineStore('sliderStore', {
         message: null,
         imageGetter: null,
         imageSet: [],
-        imageSetUpdate: []
+        imageSetUpdate: [],
+        fileName: '',
+        fileUrl: null,
+        loadingData: false
     }),
     actions: {
         async getSlider() {
@@ -34,6 +37,31 @@ export const sliderStore = defineStore('sliderStore', {
                     })
                     .catch((err) => {
                         console.log(err);
+                    });
+            } catch (error) {
+                console.log(error);
+            }
+        },
+        async getSliderById(id) {
+            const store = authStore();
+            console.log(id);
+            this.loadingData = true;
+            try {
+                await axios
+                    .get(`http://localhost:5000/api/slider/${id}`, {
+                        headers: {
+                            Authorization: `Bearer ${store.accessToken}`
+                        }
+                    })
+                    .then((res) => {
+                        console.log(res);
+                        this.fileName = res.data.slider.images;
+                        this.fileUrl = res.data.slider.url;
+                        this.loadingData = false;
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        this.loadingData = false;
                     });
             } catch (error) {
                 console.log(error);

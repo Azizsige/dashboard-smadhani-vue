@@ -187,11 +187,10 @@ const saveProduct = () => {
     }
 };
 
-const editProduct = (editProduct) => {
+const editProduct = async (editProduct) => {
     product.value = { ...editProduct };
-    console.log(product);
     updateProductDialog.value = true;
-    console.log(product.value.url);
+    await store.getSliderById(product.value._id);
 };
 
 const confirmDeleteProduct = (editProduct) => {
@@ -280,18 +279,17 @@ const initFilters = () => {
                     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
                     responsiveLayout="scroll">
                     <Column selectionMode="multiple" style="width: 3rem" />
-                    <Column :field="noColumn" header="No" sortable />
                     <Column header="Image" headerStyle="width:14%; min-width:10rem;">
                         <template #body="slotProps">
                             <span class="p-column-title">Image</span>
-                            <img :src="slotProps.data.url" :alt="slotProps.data.image" class="shadow-2" width="300" />
+                            <img :src="slotProps.data.url" :alt="slotProps.data.image" class="shadow-2" width="150" />
                         </template>
                     </Column>
                     <Column header="Action" headerStyle="min-width:1rem;">
                         <template #body="slotProps">
-                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2"
+                            <Button icon="pi pi-pencil" label='Edit' class="p-button-rounded p-button-warning mr-2"
                                 @click="editProduct(slotProps.data)" />
-                            <Button icon="pi pi-trash" class="p-button-rounded p-button-warning mt-2"
+                            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger mt-2" label="Delete"
                                 @click="confirmDeleteProduct(slotProps.data)" />
                         </template>
                     </Column>
@@ -342,9 +340,21 @@ const initFilters = () => {
                     </template>
                 </Dialog>
 
-                <Dialog :closable="false" v-model:visible="updateProductDialog" :style="{ width: '450px' }"
+                <!-- Update Slider -->
+                <Dialog v-if="store.loadingData" :closable="false" v-model:visible="updateProductDialog"
+                    :style="{ width: '450px' }" header="Update New Image" modal class="p-fluid">
+                    <Skeleton width="100%" height="150px"></Skeleton>
+                </Dialog>
+                <Dialog v-else :closable="false" v-model:visible="updateProductDialog" :style="{ width: '450px' }"
                     header="Update Image Slider" modal class="p-fluid">
                     <Toast />
+                    <Message :closable="false">
+                        <template #messageicon>
+                            <Avatar :image="store.fileUrl" size="xlarge" />
+
+                        </template>
+                        <span class="ml-2">{{ store.fileName }}</span>
+                    </Message>
                     <FileUpload name="demo[]" url="#" :auto="true" :multiple="false" :maxFileSize="1000000" ref="fileUpload"
                         @select="($event) => {
                             console.log('On select : ', $event.files);
